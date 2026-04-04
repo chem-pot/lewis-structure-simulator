@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>루이스 전자점식 / 구조식 시뮬레이터</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', Arial, sans-serif;
+      background: #f5f6fa;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      width: 100%;
+      max-width: 640px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a18;
+      margin-bottom: 1.25rem;
+      text-align: center;
+      letter-spacing: -0.01em;
+    }
+    .card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-size: 13px;
+      color: #6b6960;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .elem-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .elem-btn {
+      border: 1.5px solid #B5D4F4;
+      background: #E6F1FB;
+      color: #0C447C;
+      border-radius: 8px;
+      padding: 6px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .elem-btn:hover { background: #B5D4F4; }
+    .elem-btn.selected {
+      background: #378ADD;
+      border-color: #185FA5;
+      color: #fff;
+    }
+    .mode-row {
+      display: flex;
+      gap: 8px;
+    }
+    .mode-btn {
+      flex: 1;
+      border: 0.5px solid #ccc;
+      background: #f5f6fa;
+      color: #1a1a18;
+      border-radius: 8px;
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .mode-btn.active {
+      background: #185FA5;
+      color: #fff;
+      border-color: #185FA5;
+    }
+    .canvas-card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .info-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .info-chip {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 8px;
+    }
+    .chip-blue  { background: #E6F1FB; color: #0C447C; }
+    .chip-green { background: #EAF3DE; color: #27500A; }
+    .chip-amber { background: #FAEEDA; color: #633806; }
+    .mol-desc {
+      font-size: 13px;
+      color: #6b6960;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #6b6960;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>루이스 전자점식 · 구조식 시뮬레이터</h1>
+
+  <div class="card">
+    <div class="section-title">분자 선택</div>
+    <div class="elem-grid">
+      <button class="elem-btn selected" onclick="selectMol(this,'Cl2')">Cl₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'F2')">F₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'H2O')">H₂O</button>
+      <button class="elem-btn" onclick="selectMol(this,'CO2')">CO₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'NH3')">NH₃</button>
+      <button class="elem-btn" onclick="selectMol(this,'CH4')">CH₄</button>
+      <button class="elem-btn" onclick="selectMol(this,'N2')">N₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'O2')">O₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'HCl')">HCl</button>
+      <button class="elem-btn" onclick="selectMol(this,'BF3')">BF₃</button>
+      <button class="elem-btn" onclick="selectMol(this,'BeCl2')">BeCl₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'HCN')">HCN</button>
+      <button class="elem-btn" onclick="selectMol(this,'CH2O')">CH₂O</button>
+      <button class="elem-btn" onclick="selectMol(this,'CF2Cl2')">CF₂Cl₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'PF3')">PF₃</button>
+      <button class="elem-btn" onclick="selectMol(this,'OF2')">OF₂</button>
+      <button class="elem-btn" onclick="selectMol(this,'CCl4')">CCl₄</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="mode-row">
+      <button class="mode-btn active" id="btnDot" onclick="setMode('dot')">● 루이스 전자점식</button>
+      <button class="mode-btn" id="btnStruct" onclick="setMode('struct')">— 루이스 구조식</button>
+    </div>
+  </div>
+
+  <div class="canvas-card">
+    <canvas id="drawCanvas" width="580" height="240"></canvas>
+    <div class="info-row" id="infoRow"></div>
+    <div class="mol-desc" id="molDesc"></div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#BA7517;"></span>비공유 전자쌍</span>
+      <span><span class="legend-dot" style="background:#185FA5;"></span>공유 전자쌍</span>
+    </div>
+  </div>
+
+  <footer>고등학교 화학 I · 루이스 전자점식 시뮬레이터</footer>
+</div>
+
+<script>
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+let currentMol = 'Cl2';
+let currentMode = 'dot';
+
+const DR = 2.8;
+const AFONT = 'bold 28px serif';
+const LFONT = '400 12px Arial, sans-serif';
+
+function col() {
+  return {
+    text: '#1a1a18',
+    lone: '#BA7517',
+    bond: '#185FA5',
+    sub:  '#6b6960',
+  };
+}
+
+function clear() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+function sw(s) { ctx.font = AFONT; return ctx.measureText(s).width; }
+
+function drawSym(x, y, s) {
+  ctx.font = AFONT;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = col().text;
+  ctx.fillText(s, x, y);
+}
+
+function dot(x, y, c) {
+  ctx.beginPath();
+  ctx.arc(x, y, DR, 0, Math.PI * 2);
+  ctx.fillStyle = c;
+  ctx.fill();
+}
+
+const HH = 12;
+const PAD = 5;
+const GAP = 7;
+
+function lone(ax, ay, s, side, n) {
+  const hw = sw(s) / 2;
+  const c = col().lone;
+  if (side === 'top')    { const y = ay - HH - PAD; n===1?dot(ax,y,c):(dot(ax-GAP/2,y,c),dot(ax+GAP/2,y,c)); }
+  if (side === 'bottom') { const y = ay + HH + PAD; n===1?dot(ax,y,c):(dot(ax-GAP/2,y,c),dot(ax+GAP/2,y,c)); }
+  if (side === 'left')   { const x = ax - hw - PAD; n===1?dot(x,ay,c):(dot(x,ay-GAP/2,c),dot(x,ay+GAP/2,c)); }
+  if (side === 'right')  { const x = ax + hw + PAD; n===1?dot(x,ay,c):(dot(x,ay-GAP/2,c),dot(x,ay+GAP/2,c)); }
+}
+
+// 단일/이중: 그대로
+function shared(x1, y1, s1, x2, y2, s2, bonds) {
+  const e1 = x1 + sw(s1) / 2;
+  const e2 = x2 - sw(s2) / 2;
+  const mx = (e1 + e2) / 2;
+  const my = (y1 + y2) / 2;
+  const c = col().bond;
+  const sp = 6;
+  if (bonds === 1) {
+    dot(mx, my - sp/2, c);
+    dot(mx, my + sp/2, c);
+  } else if (bonds === 2) {
+    dot(mx-5, my-sp/2, c); dot(mx-5, my+sp/2, c);
+    dot(mx+5, my-sp/2, c); dot(mx+5, my+sp/2, c);
+  }
+}
+
+// 삼중결합: 세 쌍을 세로로 쌓기 (각 쌍은 가로 두 점)
+function sharedTriple(x1, y1, s1, x2, y2, s2) {
+  const e1 = x1 + sw(s1) / 2;
+  const e2 = x2 - sw(s2) / 2;
+  const mx = (e1 + e2) / 2;
+  const my = (y1 + y2) / 2;
+  const c = col().bond;
+  const hp = 5;
+  const vp = 7;
+  dot(mx - hp, my - vp, c); dot(mx + hp, my - vp, c);
+  dot(mx - hp, my,      c); dot(mx + hp, my,      c);
+  dot(mx - hp, my + vp, c); dot(mx + hp, my + vp, c);
+}
+
+// 수직 공유 전자쌍
+function sharedV(x1, y1, x2, y2) {
+  const e1 = y1 + HH;
+  const e2 = y2 - HH;
+  const mx = (x1 + x2) / 2;
+  const my = (e1 + e2) / 2;
+  const c = col().bond;
+  dot(mx - 5, my, c);
+  dot(mx + 5, my, c);
+}
+
+function bondLine(x1, y1, s1, x2, y2, s2, bonds) {
+  const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+  const ux=dx/len, uy=dy/len, nx=-uy, ny=ux;
+  const sx=x1+ux*(sw(s1)/2+2), sy=y1+uy*(sw(s1)/2+2);
+  const ex=x2-ux*(sw(s2)/2+2), ey=y2-uy*(sw(s2)/2+2);
+  const step=5;
+  const offsets = bonds===1?[0]: bonds===2?[-step,step]: [-step*1.6,0,step*1.6];
+  ctx.strokeStyle = col().bond;
+  ctx.lineWidth = 2;
+  for (const o of offsets) {
+    ctx.beginPath();
+    ctx.moveTo(sx+nx*o, sy+ny*o);
+    ctx.lineTo(ex+nx*o, ey+ny*o);
+    ctx.stroke();
+  }
+}
+
+function lbl(x, y, t) {
+  ctx.font = LFONT;
+  ctx.fillStyle = col().sub;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(t, x, y);
+}
+
+function gap(s1, s2) {
+  return sw(s1)/2 + sw(s2)/2 + 14;
+}
+
+const cx0 = 290; // 캔버스 중심 x
+
+const MOLS = {
+  Cl2: {
+    name:'염소 (Cl₂)', bondType:'단일결합', lonePairs:6,
+    desc:'두 Cl 원자가 단일결합. 각 Cl에 비공유 전자쌍 3쌍. 옥텟 규칙 만족.',
+    dot() {
+      const g=gap('Cl','Cl'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      lone(lx,cy,'Cl','top',2); lone(lx,cy,'Cl','bottom',2); lone(lx,cy,'Cl','left',2);
+      lone(rx,cy,'Cl','top',2); lone(rx,cy,'Cl','bottom',2); lone(rx,cy,'Cl','right',2);
+      shared(lx,cy,'Cl',rx,cy,'Cl',1);
+      drawSym(lx,cy,'Cl'); drawSym(rx,cy,'Cl');
+    },
+    struct() {
+      const g=gap('Cl','Cl'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      bondLine(lx,cy,'Cl',rx,cy,'Cl',1);
+      lone(lx,cy,'Cl','top',2); lone(lx,cy,'Cl','bottom',2); lone(lx,cy,'Cl','left',2);
+      lone(rx,cy,'Cl','top',2); lone(rx,cy,'Cl','bottom',2); lone(rx,cy,'Cl','right',2);
+      drawSym(lx,cy,'Cl'); drawSym(rx,cy,'Cl');
+      lbl(cx0,cy+55,'단일결합 (—)');
+    }
+  },
+  F2: {
+    name:'불소 (F₂)', bondType:'단일결합', lonePairs:6,
+    desc:'두 F 원자가 단일결합. 각 F에 비공유 전자쌍 3쌍. 옥텟 규칙 만족.',
+    dot() {
+      const g=gap('F','F'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      lone(lx,cy,'F','top',2); lone(lx,cy,'F','bottom',2); lone(lx,cy,'F','left',2);
+      lone(rx,cy,'F','top',2); lone(rx,cy,'F','bottom',2); lone(rx,cy,'F','right',2);
+      shared(lx,cy,'F',rx,cy,'F',1);
+      drawSym(lx,cy,'F'); drawSym(rx,cy,'F');
+    },
+    struct() {
+      const g=gap('F','F'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      bondLine(lx,cy,'F',rx,cy,'F',1);
+      lone(lx,cy,'F','top',2); lone(lx,cy,'F','bottom',2); lone(lx,cy,'F','left',2);
+      lone(rx,cy,'F','top',2); lone(rx,cy,'F','bottom',2); lone(rx,cy,'F','right',2);
+      drawSym(lx,cy,'F'); drawSym(rx,cy,'F');
+      lbl(cx0,cy+50,'단일결합 (—)');
+    }
+  },
+  H2O: {
+    name:'물 (H₂O)', bondType:'단일결합', lonePairs:2,
+    desc:'O 중심, H 2개와 단일결합. O에 비공유 전자쌍 2쌍.',
+    dot() {
+      const gL=gap('H','O'), gR=gap('O','H');
+      const ox=cx0, cy=110, hL=cx0-gL, hR=cx0+gR;
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      shared(hL,cy,'H',ox,cy,'O',1);
+      shared(ox,cy,'O',hR,cy,'H',1);
+      drawSym(hL,cy,'H'); drawSym(ox,cy,'O'); drawSym(hR,cy,'H');
+    },
+    struct() {
+      const gL=gap('H','O'), gR=gap('O','H');
+      const ox=cx0, cy=110, hL=cx0-gL, hR=cx0+gR;
+      bondLine(hL,cy,'H',ox,cy,'O',1);
+      bondLine(ox,cy,'O',hR,cy,'H',1);
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      drawSym(hL,cy,'H'); drawSym(ox,cy,'O'); drawSym(hR,cy,'H');
+      lbl(cx0,cy+50,'비공유 전자쌍 2쌍');
+    }
+  },
+  CO2: {
+    name:'이산화탄소 (CO₂)', bondType:'이중결합', lonePairs:4,
+    desc:'C 중심, 양쪽 O와 이중결합. 각 O에 비공유 전자쌍 2쌍. 직선형 구조.',
+    dot() {
+      const gL=gap('O','C'), gR=gap('C','O');
+      const cx=cx0, cy=110, oL=cx0-gL, oR=cx0+gR;
+      lone(oL,cy,'O','top',2); lone(oL,cy,'O','bottom',2); lone(oL,cy,'O','left',2);
+      lone(oR,cy,'O','top',2); lone(oR,cy,'O','bottom',2); lone(oR,cy,'O','right',2);
+      shared(oL,cy,'O',cx,cy,'C',2);
+      shared(cx,cy,'C',oR,cy,'O',2);
+      drawSym(oL,cy,'O'); drawSym(cx,cy,'C'); drawSym(oR,cy,'O');
+    },
+    struct() {
+      const gL=gap('O','C'), gR=gap('C','O');
+      const cx=cx0, cy=110, oL=cx0-gL, oR=cx0+gR;
+      bondLine(oL,cy,'O',cx,cy,'C',2);
+      bondLine(cx,cy,'C',oR,cy,'O',2);
+      lone(oL,cy,'O','top',2); lone(oL,cy,'O','bottom',2); lone(oL,cy,'O','left',2);
+      lone(oR,cy,'O','top',2); lone(oR,cy,'O','bottom',2); lone(oR,cy,'O','right',2);
+      drawSym(oL,cy,'O'); drawSym(cx,cy,'C'); drawSym(oR,cy,'O');
+      lbl(cx0,cy+55,'이중결합 (=)');
+    }
+  },
+  NH3: {
+    name:'암모니아 (NH₃)', bondType:'단일결합', lonePairs:1,
+    desc:'N 중심, H 3개와 단일결합. N에 비공유 전자쌍 1쌍.',
+    dot() {
+      const gH=gap('H','N'), gV=gap('N','H');
+      const nx=cx0, cy=100, hL=cx0-gH, hR=cx0+gH, hBy=cy+gV;
+      lone(nx,cy,'N','top',2);
+      shared(hL,cy,'H',nx,cy,'N',1);
+      shared(nx,cy,'N',hR,cy,'H',1);
+      sharedV(nx,cy,nx,hBy);
+      drawSym(hL,cy,'H'); drawSym(nx,cy,'N'); drawSym(hR,cy,'H'); drawSym(nx,hBy,'H');
+    },
+    struct() {
+      const gH=gap('H','N'), gV=gap('N','H');
+      const nx=cx0, cy=100, hL=cx0-gH, hR=cx0+gH, hBy=cy+gV;
+      bondLine(hL,cy,'H',nx,cy,'N',1);
+      bondLine(nx,cy,'N',hR,cy,'H',1);
+      bondLine(nx,cy,'N',nx,hBy,'H',1);
+      lone(nx,cy,'N','top',2);
+      drawSym(hL,cy,'H'); drawSym(nx,cy,'N'); drawSym(hR,cy,'H'); drawSym(nx,hBy,'H');
+      lbl(cx0,hBy+44,'비공유 전자쌍 1쌍');
+    }
+  },
+  CH4: {
+    name:'메테인 (CH₄)', bondType:'단일결합', lonePairs:0,
+    desc:'C 중심, H 4개와 단일결합. 비공유 전자쌍 없음.',
+    dot() {
+      const gH=gap('H','C'), gV=gap('C','H');
+      const cx=cx0, cy=110, hL=cx0-gH, hR=cx0+gH, hTy=cy-gV, hBy=cy+gV;
+      shared(hL,cy,'H',cx,cy,'C',1);
+      shared(cx,cy,'C',hR,cy,'H',1);
+      sharedV(cx,hTy,cx,cy);
+      sharedV(cx,cy,cx,hBy);
+      drawSym(hL,cy,'H'); drawSym(cx,cy,'C'); drawSym(hR,cy,'H');
+      drawSym(cx,hTy,'H'); drawSym(cx,hBy,'H');
+    },
+    struct() {
+      const gH=gap('H','C'), gV=gap('C','H');
+      const cx=cx0, cy=110, hL=cx0-gH, hR=cx0+gH, hTy=cy-gV, hBy=cy+gV;
+      bondLine(hL,cy,'H',cx,cy,'C',1);
+      bondLine(cx,cy,'C',hR,cy,'H',1);
+      bondLine(cx,hTy,'H',cx,cy,'C',1);
+      bondLine(cx,cy,'C',cx,hBy,'H',1);
+      drawSym(hL,cy,'H'); drawSym(cx,cy,'C'); drawSym(hR,cy,'H');
+      drawSym(cx,hTy,'H'); drawSym(cx,hBy,'H');
+      lbl(cx0,hBy+42,'비공유 전자쌍 없음');
+    }
+  },
+  N2: {
+    name:'질소 (N₂)', bondType:'삼중결합', lonePairs:2,
+    desc:'두 N 원자가 삼중결합. 각 N에 비공유 전자쌍 1쌍.',
+    dot() {
+      const g=gap('N','N'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      lone(lx,cy,'N','left',2);
+      lone(rx,cy,'N','right',2);
+      sharedTriple(lx,cy,'N',rx,cy,'N');
+      drawSym(lx,cy,'N'); drawSym(rx,cy,'N');
+    },
+    struct() {
+      const g=gap('N','N'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      bondLine(lx,cy,'N',rx,cy,'N',3);
+      lone(lx,cy,'N','left',2);
+      lone(rx,cy,'N','right',2);
+      drawSym(lx,cy,'N'); drawSym(rx,cy,'N');
+      lbl(cx0,cy+50,'삼중결합 (≡)');
+    }
+  },
+  O2: {
+    name:'산소 (O₂)', bondType:'이중결합', lonePairs:4,
+    desc:'두 O 원자가 이중결합. 각 O에 비공유 전자쌍 2쌍.',
+    dot() {
+      const g=gap('O','O'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      lone(lx,cy,'O','top',2); lone(lx,cy,'O','left',2);
+      lone(rx,cy,'O','top',2); lone(rx,cy,'O','right',2);
+      shared(lx,cy,'O',rx,cy,'O',2);
+      drawSym(lx,cy,'O'); drawSym(rx,cy,'O');
+    },
+    struct() {
+      const g=gap('O','O'), lx=cx0-g/2, rx=cx0+g/2, cy=110;
+      bondLine(lx,cy,'O',rx,cy,'O',2);
+      lone(lx,cy,'O','top',2); lone(lx,cy,'O','left',2);
+      lone(rx,cy,'O','top',2); lone(rx,cy,'O','right',2);
+      drawSym(lx,cy,'O'); drawSym(rx,cy,'O');
+      lbl(cx0,cy+50,'이중결합 (=)');
+    }
+  },
+  HCl: {
+    name:'염화수소 (HCl)', bondType:'단일결합', lonePairs:3,
+    desc:'H와 Cl의 단일결합. Cl에 비공유 전자쌍 3쌍.',
+    dot() {
+      const g=gap('H','Cl'), hx=cx0-g/2, clx=cx0+g/2, cy=120;
+      lone(clx,cy,'Cl','top',2); lone(clx,cy,'Cl','bottom',2); lone(clx,cy,'Cl','right',2);
+      shared(hx,cy,'H',clx,cy,'Cl',1);
+      drawSym(hx,cy,'H'); drawSym(clx,cy,'Cl');
+    },
+    struct() {
+      const g=gap('H','Cl'), hx=cx0-g/2, clx=cx0+g/2, cy=120;
+      bondLine(hx,cy,'H',clx,cy,'Cl',1);
+      lone(clx,cy,'Cl','top',2); lone(clx,cy,'Cl','bottom',2); lone(clx,cy,'Cl','right',2);
+      drawSym(hx,cy,'H'); drawSym(clx,cy,'Cl');
+      lbl(cx0,cy+50,'Cl에 비공유 전자쌍 3쌍');
+    }
+  },
+
+  // ── 추가 분자 ──
+
+  BF3: {
+    name:'삼불화붕소 (BF₃)', bondType:'단일결합', lonePairs:9,
+    desc:'B 중심, F 3개와 단일결합. B에 비공유 전자쌍 없음(옥텟 미만). 각 F에 비공유 전자쌍 3쌍.',
+    dot() {
+      // B 중심, F: 왼쪽·오른쪽·아래
+      const cy=110, bx=cx0;
+      const gH=gap('B','F');
+      const fL=bx-gH, fR=bx+gH, fBy=cy+gH;
+      // 공유 전자쌍
+      shared(fL,cy,'F',bx,cy,'B',1);
+      shared(bx,cy,'B',fR,cy,'F',1);
+      sharedV(bx,cy,bx,fBy);
+      // 비공유 전자쌍 (F만)
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      lone(bx,fBy,'F','left',2); lone(bx,fBy,'F','right',2); lone(bx,fBy,'F','bottom',2);
+      drawSym(fL,cy,'F'); drawSym(bx,cy,'B'); drawSym(fR,cy,'F'); drawSym(bx,fBy,'F');
+    },
+    struct() {
+      const cy=110, bx=cx0;
+      const gH=gap('B','F');
+      const fL=bx-gH, fR=bx+gH, fBy=cy+gH;
+      bondLine(fL,cy,'F',bx,cy,'B',1);
+      bondLine(bx,cy,'B',fR,cy,'F',1);
+      bondLine(bx,cy,'B',bx,fBy,'F',1);
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      lone(bx,fBy,'F','left',2); lone(bx,fBy,'F','right',2); lone(bx,fBy,'F','bottom',2);
+      drawSym(fL,cy,'F'); drawSym(bx,cy,'B'); drawSym(fR,cy,'F'); drawSym(bx,fBy,'F');
+      lbl(cx0,fBy+42,'B는 옥텟 미만 (6개 전자)');
+    }
+  },
+
+  BeCl2: {
+    name:'염화베릴륨 (BeCl₂)', bondType:'단일결합', lonePairs:6,
+    desc:'Be 중심, Cl 2개와 단일결합. Be에 비공유 전자쌍 없음(옥텟 미만). 직선형 구조.',
+    dot() {
+      const cy=120, gH=gap('Cl','Be');
+      const clL=cx0-gH, clR=cx0+gH;
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      shared(clL,cy,'Cl',cx0,cy,'Be',1);
+      shared(cx0,cy,'Be',clR,cy,'Cl',1);
+      drawSym(clL,cy,'Cl'); drawSym(cx0,cy,'Be'); drawSym(clR,cy,'Cl');
+    },
+    struct() {
+      const cy=120, gH=gap('Cl','Be');
+      const clL=cx0-gH, clR=cx0+gH;
+      bondLine(clL,cy,'Cl',cx0,cy,'Be',1);
+      bondLine(cx0,cy,'Be',clR,cy,'Cl',1);
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      drawSym(clL,cy,'Cl'); drawSym(cx0,cy,'Be'); drawSym(clR,cy,'Cl');
+      lbl(cx0,cy+55,'Be는 옥텟 미만 (4개 전자), 직선형');
+    }
+  },
+
+  HCN: {
+    name:'사이안화수소 (HCN)', bondType:'삼중결합', lonePairs:1,
+    desc:'H-C 단일결합, C≡N 삼중결합. N에 비공유 전자쌍 1쌍. 직선형 구조.',
+    dot() {
+      const cy=120;
+      const gHC=gap('H','C'), gCN=gap('C','N');
+      const hx=cx0-gHC-gCN/2, cx=cx0-gCN/2+gHC/2;
+      // 중심 C 위치를 조정해 전체 수평 중앙 정렬
+      const totalW = gHC + gCN;
+      const hxx = cx0 - totalW/2;
+      const cxx = hxx + gHC;
+      const nxx = cxx + gCN;
+      shared(hxx,cy,'H',cxx,cy,'C',1);
+      sharedTriple(cxx,cy,'C',nxx,cy,'N');
+      lone(nxx,cy,'N','right',2);
+      drawSym(hxx,cy,'H'); drawSym(cxx,cy,'C'); drawSym(nxx,cy,'N');
+    },
+    struct() {
+      const cy=120;
+      const gHC=gap('H','C'), gCN=gap('C','N');
+      const totalW = gHC + gCN;
+      const hxx = cx0 - totalW/2;
+      const cxx = hxx + gHC;
+      const nxx = cxx + gCN;
+      bondLine(hxx,cy,'H',cxx,cy,'C',1);
+      bondLine(cxx,cy,'C',nxx,cy,'N',3);
+      lone(nxx,cy,'N','right',2);
+      drawSym(hxx,cy,'H'); drawSym(cxx,cy,'C'); drawSym(nxx,cy,'N');
+      lbl(cx0,cy+50,'삼중결합 (≡), 직선형');
+    }
+  },
+
+  CH2O: {
+    name:'폼알데하이드 (CH₂O)', bondType:'이중결합', lonePairs:2,
+    desc:'C 중심, H 2개 단일결합 + O 이중결합. O에 비공유 전자쌍 2쌍.',
+    dot() {
+      const cy=110, cx=cx0;
+      const gCO=gap('C','O'), gCH=gap('C','H'), gV=gap('C','H');
+      const ox=cx+gCO, hL=cx-gCH, hBy=cy+gV;
+      // C-O 이중결합
+      shared(cx,cy,'C',ox,cy,'O',2);
+      // C-H 단일결합 (왼쪽, 아래)
+      shared(hL,cy,'H',cx,cy,'C',1);
+      sharedV(cx,cy,cx,hBy);
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      drawSym(hL,cy,'H'); drawSym(cx,cy,'C'); drawSym(ox,cy,'O'); drawSym(cx,hBy,'H');
+    },
+    struct() {
+      const cy=110, cx=cx0;
+      const gCO=gap('C','O'), gCH=gap('C','H'), gV=gap('C','H');
+      const ox=cx+gCO, hL=cx-gCH, hBy=cy+gV;
+      bondLine(cx,cy,'C',ox,cy,'O',2);
+      bondLine(hL,cy,'H',cx,cy,'C',1);
+      bondLine(cx,cy,'C',cx,hBy,'H',1);
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      drawSym(hL,cy,'H'); drawSym(cx,cy,'C'); drawSym(ox,cy,'O'); drawSym(cx,hBy,'H');
+      lbl(cx0+20,hBy+42,'O에 비공유 전자쌍 2쌍');
+    }
+  },
+
+  CF2Cl2: {
+    name:'다이클로로다이플루오로메테인 (CF₂Cl₂)', bondType:'단일결합', lonePairs:12,
+    desc:'C 중심, F 2개·Cl 2개와 단일결합. 각 F에 비공유 전자쌍 3쌍, 각 Cl에 3쌍.',
+    dot() {
+      // F 위·아래, Cl 왼·오른쪽
+      const cy=120, cx=cx0;
+      const gCF=gap('C','F'), gCCl=gap('C','Cl');
+      const fTy=cy-gCF, fBy=cy+gCF, clL=cx-gCCl, clR=cx+gCCl;
+      sharedV(cx,fTy,cx,cy);
+      sharedV(cx,cy,cx,fBy);
+      shared(clL,cy,'Cl',cx,cy,'C',1);
+      shared(cx,cy,'C',clR,cy,'Cl',1);
+      lone(fTy===cy-gCF?cx:cx,'F','top',2);
+      lone(cx,fTy,'F','top',2); lone(cx,fTy,'F','left',2); lone(cx,fTy,'F','right',2);
+      lone(cx,fBy,'F','bottom',2); lone(cx,fBy,'F','left',2); lone(cx,fBy,'F','right',2);
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      drawSym(cx,fTy,'F'); drawSym(cx,cy,'C'); drawSym(cx,fBy,'F');
+      drawSym(clL,cy,'Cl'); drawSym(clR,cy,'Cl');
+    },
+    struct() {
+      const cy=120, cx=cx0;
+      const gCF=gap('C','F'), gCCl=gap('C','Cl');
+      const fTy=cy-gCF, fBy=cy+gCF, clL=cx-gCCl, clR=cx+gCCl;
+      bondLine(cx,fTy,'F',cx,cy,'C',1);
+      bondLine(cx,cy,'C',cx,fBy,'F',1);
+      bondLine(clL,cy,'Cl',cx,cy,'C',1);
+      bondLine(cx,cy,'C',clR,cy,'Cl',1);
+      lone(cx,fTy,'F','top',2); lone(cx,fTy,'F','left',2); lone(cx,fTy,'F','right',2);
+      lone(cx,fBy,'F','bottom',2); lone(cx,fBy,'F','left',2); lone(cx,fBy,'F','right',2);
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      drawSym(cx,fTy,'F'); drawSym(cx,cy,'C'); drawSym(cx,fBy,'F');
+      drawSym(clL,cy,'Cl'); drawSym(clR,cy,'Cl');
+    }
+  },
+
+  PF3: {
+    name:'삼불화인 (PF₃)', bondType:'단일결합', lonePairs:10,
+    desc:'P 중심, F 3개와 단일결합. P에 비공유 전자쌍 1쌍. 각 F에 비공유 전자쌍 3쌍.',
+    dot() {
+      const cy=105, px=cx0;
+      const gH=gap('P','F');
+      const fL=px-gH, fR=px+gH, fBy=cy+gH;
+      shared(fL,cy,'F',px,cy,'P',1);
+      shared(px,cy,'P',fR,cy,'F',1);
+      sharedV(px,cy,px,fBy);
+      lone(px,cy,'P','top',2);
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      lone(px,fBy,'F','left',2); lone(px,fBy,'F','right',2); lone(px,fBy,'F','bottom',2);
+      drawSym(fL,cy,'F'); drawSym(px,cy,'P'); drawSym(fR,cy,'F'); drawSym(px,fBy,'F');
+    },
+    struct() {
+      const cy=105, px=cx0;
+      const gH=gap('P','F');
+      const fL=px-gH, fR=px+gH, fBy=cy+gH;
+      bondLine(fL,cy,'F',px,cy,'P',1);
+      bondLine(px,cy,'P',fR,cy,'F',1);
+      bondLine(px,cy,'P',px,fBy,'F',1);
+      lone(px,cy,'P','top',2);
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      lone(px,fBy,'F','left',2); lone(px,fBy,'F','right',2); lone(px,fBy,'F','bottom',2);
+      drawSym(fL,cy,'F'); drawSym(px,cy,'P'); drawSym(fR,cy,'F'); drawSym(px,fBy,'F');
+      lbl(cx0,fBy+42,'P에 비공유 전자쌍 1쌍');
+    }
+  },
+
+  OF2: {
+    name:'이불화산소 (OF₂)', bondType:'단일결합', lonePairs:8,
+    desc:'O 중심, F 2개와 단일결합. O에 비공유 전자쌍 2쌍. 각 F에 비공유 전자쌍 3쌍.',
+    dot() {
+      const cy=120, ox=cx0;
+      const gOF=gap('O','F');
+      const fL=ox-gOF, fR=ox+gOF;
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      shared(fL,cy,'F',ox,cy,'O',1);
+      shared(ox,cy,'O',fR,cy,'F',1);
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      drawSym(fL,cy,'F'); drawSym(ox,cy,'O'); drawSym(fR,cy,'F');
+    },
+    struct() {
+      const cy=120, ox=cx0;
+      const gOF=gap('O','F');
+      const fL=ox-gOF, fR=ox+gOF;
+      bondLine(fL,cy,'F',ox,cy,'O',1);
+      bondLine(ox,cy,'O',fR,cy,'F',1);
+      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
+      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
+      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
+      drawSym(fL,cy,'F'); drawSym(ox,cy,'O'); drawSym(fR,cy,'F');
+      lbl(cx0,cy+50,'O에 비공유 전자쌍 2쌍');
+    }
+  },
+
+  CCl4: {
+    name:'사염화탄소 (CCl₄)', bondType:'단일결합', lonePairs:12,
+    desc:'C 중심, Cl 4개와 단일결합. 비공유 전자쌍 없음(C). 각 Cl에 비공유 전자쌍 3쌍.',
+    dot() {
+      const cx=cx0, cy=120;
+      const gH=gap('C','Cl'), gV=gap('C','Cl');
+      const clL=cx-gH, clR=cx+gH, clTy=cy-gV, clBy=cy+gV;
+      shared(clL,cy,'Cl',cx,cy,'C',1);
+      shared(cx,cy,'C',clR,cy,'Cl',1);
+      sharedV(cx,clTy,cx,cy);
+      sharedV(cx,cy,cx,clBy);
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      lone(cx,clTy,'Cl','top',2); lone(cx,clTy,'Cl','left',2); lone(cx,clTy,'Cl','right',2);
+      lone(cx,clBy,'Cl','bottom',2); lone(cx,clBy,'Cl','left',2); lone(cx,clBy,'Cl','right',2);
+      drawSym(clL,cy,'Cl'); drawSym(cx,cy,'C'); drawSym(clR,cy,'Cl');
+      drawSym(cx,clTy,'Cl'); drawSym(cx,clBy,'Cl');
+    },
+    struct() {
+      const cx=cx0, cy=120;
+      const gH=gap('C','Cl'), gV=gap('C','Cl');
+      const clL=cx-gH, clR=cx+gH, clTy=cy-gV, clBy=cy+gV;
+      bondLine(clL,cy,'Cl',cx,cy,'C',1);
+      bondLine(cx,cy,'C',clR,cy,'Cl',1);
+      bondLine(cx,clTy,'Cl',cx,cy,'C',1);
+      bondLine(cx,cy,'C',cx,clBy,'Cl',1);
+      lone(clL,cy,'Cl','top',2); lone(clL,cy,'Cl','bottom',2); lone(clL,cy,'Cl','left',2);
+      lone(clR,cy,'Cl','top',2); lone(clR,cy,'Cl','bottom',2); lone(clR,cy,'Cl','right',2);
+      lone(cx,clTy,'Cl','top',2); lone(cx,clTy,'Cl','left',2); lone(cx,clTy,'Cl','right',2);
+      lone(cx,clBy,'Cl','bottom',2); lone(cx,clBy,'Cl','left',2); lone(cx,clBy,'Cl','right',2);
+      drawSym(clL,cy,'Cl'); drawSym(cx,cy,'C'); drawSym(clR,cy,'Cl');
+      drawSym(cx,clTy,'Cl'); drawSym(cx,clBy,'Cl');
+      lbl(cx0,clBy+42,'각 Cl에 비공유 전자쌍 3쌍');
+    }
+  },
+};
+
+function render() {
+  clear();
+  const mol = MOLS[currentMol];
+  if (!mol) return;
+  currentMode === 'dot' ? mol.dot() : mol.struct();
+  document.getElementById('infoRow').innerHTML = `
+    <span class="info-chip chip-blue">${mol.name}</span>
+    <span class="info-chip chip-green">결합: ${mol.bondType}</span>
+    <span class="info-chip chip-amber">비공유 전자쌍: ${mol.lonePairs}쌍</span>`;
+  document.getElementById('molDesc').textContent = mol.desc;
+}
+
+function selectMol(btn, key) {
+  currentMol = key;
+  document.querySelectorAll('.elem-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  render();
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btnDot').classList.toggle('active', mode === 'dot');
+  document.getElementById('btnStruct').classList.toggle('active', mode === 'struct');
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
