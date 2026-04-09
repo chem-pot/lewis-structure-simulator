@@ -314,6 +314,44 @@ function lbl(x, y, t) {
   ctx.fillText(t, x, y);
 }
 
+// 임의 방향 비공유 전자쌍: 원자(ax,ay)에서 각도(deg)방향으로 떨어진 위치에 점 2개
+// 두 점은 방향의 수직으로 GAP만큼 벌림
+function loneAngle(ax, ay, deg, color) {
+  const rad = deg * Math.PI / 180;
+  const dist = HH + PAD + 4;
+  const cx2 = ax + dist * Math.cos(rad);
+  const cy2 = ay + dist * Math.sin(rad);
+  // 수직 방향
+  const nx = -Math.sin(rad), ny = Math.cos(rad);
+  const c = color || col().lone;
+  dot(cx2 + nx * GAP/2, cy2 + ny * GAP/2, c);
+  dot(cx2 - nx * GAP/2, cy2 - ny * GAP/2, c);
+}
+
+// 굽은형 공유 전자쌍: 두 원자 사이 중간에 세로 두 점
+function sharedAngle(x1, y1, s1, x2, y2, s2, bonds) {
+  const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+  const ux = dx/len, uy = dy/len;
+  const nx = -uy, ny = ux;
+  // 두 글자 가장자리에서 안쪽으로
+  const e1x = x1 + ux*(sw(s1)/2), e1y = y1 + uy*(sw(s1)/2);
+  const e2x = x2 - ux*(sw(s2)/2), e2y = y2 - uy*(sw(s2)/2);
+  const mx = (e1x+e2x)/2, my = (e1y+e2y)/2;
+  const c = col().bond;
+  const sp = 6;
+  if (bonds === 1) {
+    // 결합 방향에 수직으로 두 점
+    dot(mx + nx*sp/2, my + ny*sp/2, c);
+    dot(mx - nx*sp/2, my - ny*sp/2, c);
+  } else if (bonds === 2) {
+    const off = 5;
+    dot(mx + ux*off + nx*sp/2, my + uy*off + ny*sp/2, c);
+    dot(mx + ux*off - nx*sp/2, my + uy*off - ny*sp/2, c);
+    dot(mx - ux*off + nx*sp/2, my - uy*off + ny*sp/2, c);
+    dot(mx - ux*off - nx*sp/2, my - uy*off - ny*sp/2, c);
+  }
+}
+
 function gap(s1, s2) {
   return sw(s1)/2 + sw(s2)/2 + 14;
 }
@@ -378,21 +416,25 @@ const MOLS = {
     name:'물 (H₂O)', bondType:'단일결합', lonePairs:2,
     desc:'O 중심, H 2개와 단일결합. O에 비공유 전자쌍 2쌍.',
     dot() {
-      const gL=gap('H','O'), gR=gap('O','H');
-      const ox=cx0, cy=110, hL=cx0-gL, hR=cx0+gR;
-      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
-      shared(hL,cy,'H',ox,cy,'O',1);
-      shared(ox,cy,'O',hR,cy,'H',1);
-      drawSym(hL,cy,'H'); drawSym(ox,cy,'O'); drawSym(hR,cy,'H');
+      const ox=cx0-20, oy=105;
+      const gH=gap('O','H'), gV=gap('O','H');
+      const hRx=ox+gH, hRy=oy;      // 오른쪽 H
+      const hBx=ox,    hBy=oy+gV;   // 아래 H
+      lone(ox,oy,'O','top',2); lone(ox,oy,'O','left',2);
+      shared(ox,oy,'O',hRx,hRy,'H',1);
+      sharedV(ox,oy,hBx,hBy);
+      drawSym(ox,oy,'O'); drawSym(hRx,hRy,'H'); drawSym(hBx,hBy,'H');
     },
     struct() {
-      const gL=gap('H','O'), gR=gap('O','H');
-      const ox=cx0, cy=110, hL=cx0-gL, hR=cx0+gR;
-      bondLine(hL,cy,'H',ox,cy,'O',1);
-      bondLine(ox,cy,'O',hR,cy,'H',1);
-      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
-      drawSym(hL,cy,'H'); drawSym(ox,cy,'O'); drawSym(hR,cy,'H');
-      lbl(cx0,cy+50,'비공유 전자쌍 2쌍');
+      const ox=cx0-20, oy=105;
+      const gH=gap('O','H'), gV=gap('O','H');
+      const hRx=ox+gH, hRy=oy;
+      const hBx=ox,    hBy=oy+gV;
+      bondLine(ox,oy,'O',hRx,hRy,'H',1);
+      bondLine(ox,oy,'O',hBx,hBy,'H',1);
+      lone(ox,oy,'O','top',2); lone(ox,oy,'O','left',2);
+      drawSym(ox,oy,'O'); drawSym(hRx,hRy,'H'); drawSym(hBx,hBy,'H');
+      lbl(ox+30,hBy+42,'O에 비공유 전자쌍 2쌍');
     }
   },
   CO2: {
@@ -714,27 +756,31 @@ const MOLS = {
     name:'이불화산소 (OF₂)', bondType:'단일결합', lonePairs:8,
     desc:'O 중심, F 2개와 단일결합. O에 비공유 전자쌍 2쌍. 각 F에 비공유 전자쌍 3쌍.',
     dot() {
-      const cy=120, ox=cx0;
-      const gOF=gap('O','F');
-      const fL=ox-gOF, fR=ox+gOF;
-      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
-      shared(fL,cy,'F',ox,cy,'O',1);
-      shared(ox,cy,'O',fR,cy,'F',1);
-      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
-      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
-      drawSym(fL,cy,'F'); drawSym(ox,cy,'O'); drawSym(fR,cy,'F');
+      const ox=cx0-20, oy=100;
+      const gOF=gap('O','F'), gV=gap('O','F');
+      const fRx=ox+gOF, fRy=oy;    // 오른쪽 F
+      const fBx=ox,     fBy=oy+gV; // 아래 F
+      lone(ox,oy,'O','top',2); lone(ox,oy,'O','left',2);
+      shared(ox,oy,'O',fRx,fRy,'F',1);
+      sharedV(ox,oy,fBx,fBy);
+      // 오른쪽 F: top, bottom, right
+      lone(fRx,fRy,'F','top',2); lone(fRx,fRy,'F','bottom',2); lone(fRx,fRy,'F','right',2);
+      // 아래 F: left, right, bottom
+      lone(fBx,fBy,'F','left',2); lone(fBx,fBy,'F','right',2); lone(fBx,fBy,'F','bottom',2);
+      drawSym(ox,oy,'O'); drawSym(fRx,fRy,'F'); drawSym(fBx,fBy,'F');
     },
     struct() {
-      const cy=120, ox=cx0;
-      const gOF=gap('O','F');
-      const fL=ox-gOF, fR=ox+gOF;
-      bondLine(fL,cy,'F',ox,cy,'O',1);
-      bondLine(ox,cy,'O',fR,cy,'F',1);
-      lone(ox,cy,'O','top',2); lone(ox,cy,'O','bottom',2);
-      lone(fL,cy,'F','top',2); lone(fL,cy,'F','bottom',2); lone(fL,cy,'F','left',2);
-      lone(fR,cy,'F','top',2); lone(fR,cy,'F','bottom',2); lone(fR,cy,'F','right',2);
-      drawSym(fL,cy,'F'); drawSym(ox,cy,'O'); drawSym(fR,cy,'F');
-      lbl(cx0,cy+50,'O에 비공유 전자쌍 2쌍');
+      const ox=cx0-20, oy=100;
+      const gOF=gap('O','F'), gV=gap('O','F');
+      const fRx=ox+gOF, fRy=oy;
+      const fBx=ox,     fBy=oy+gV;
+      bondLine(ox,oy,'O',fRx,fRy,'F',1);
+      bondLine(ox,oy,'O',fBx,fBy,'F',1);
+      lone(ox,oy,'O','top',2); lone(ox,oy,'O','left',2);
+      lone(fRx,fRy,'F','top',2); lone(fRx,fRy,'F','bottom',2); lone(fRx,fRy,'F','right',2);
+      lone(fBx,fBy,'F','left',2); lone(fBx,fBy,'F','right',2); lone(fBx,fBy,'F','bottom',2);
+      drawSym(ox,oy,'O'); drawSym(fRx,fRy,'F'); drawSym(fBx,fBy,'F');
+      lbl(ox+30,fBy+42,'O에 비공유 전자쌍 2쌍, 각 F에 3쌍');
     }
   },
 
@@ -867,48 +913,43 @@ const MOLS = {
     name:'이불화이산소 (O₂F₂)', bondType:'단일결합', lonePairs:10,
     desc:'F-O-O-F 구조. O-O 단일결합. 각 O에 비공유 전자쌍 2쌍, 각 F에 비공유 전자쌍 3쌍.',
     dot() {
-      const cy=120;
-      const gOF=gap('O','F'), gOO=gap('O','O');
-      const totalW = gOF + gOO + gOF;
-      const fLx = cx0 - totalW/2;
-      const oLx = fLx + gOF;
-      const oRx = oLx + gOO;
-      const fRx = oRx + gOF;
-      // F-O 단일결합
-      shared(fLx,cy,'F',oLx,cy,'O',1);
-      // O-O 단일결합
-      shared(oLx,cy,'O',oRx,cy,'O',1);
-      // O-F 단일결합
-      shared(oRx,cy,'O',fRx,cy,'F',1);
-      // 왼쪽 O: top, bottom (F쪽 left 막힘, O쪽 right 막힘)
-      lone(oLx,cy,'O','top',2); lone(oLx,cy,'O','bottom',2);
-      // 오른쪽 O: top, bottom
-      lone(oRx,cy,'O','top',2); lone(oRx,cy,'O','bottom',2);
-      // 왼쪽 F: top, bottom, left (O쪽 right 막힘)
-      lone(fLx,cy,'F','top',2); lone(fLx,cy,'F','bottom',2); lone(fLx,cy,'F','left',2);
-      // 오른쪽 F: top, bottom, right (O쪽 left 막힘)
-      lone(fRx,cy,'F','top',2); lone(fRx,cy,'F','bottom',2); lone(fRx,cy,'F','right',2);
-      drawSym(fLx,cy,'F'); drawSym(oLx,cy,'O');
-      drawSym(oRx,cy,'O'); drawSym(fRx,cy,'F');
+      // oL-oR 수평, fL은 oL 위, fR은 oR 아래
+      const cy=125;
+      const gOO=gap('O','O'), gOF=gap('O','F');
+      const oLx=cx0-gOO/2, oRx=cx0+gOO/2;
+      const fLx=oLx, fLy=cy-gOF;   // 왼쪽 O 위 F
+      const fRx=oRx, fRy=cy+gOF;   // 오른쪽 O 아래 F
+      // 공유 전자쌍
+      sharedV(fLx,fLy,oLx,cy);          // F위-O 수직
+      shared(oLx,cy,'O',oRx,cy,'O',1);  // O-O 수평
+      sharedV(oRx,cy,fRx,fRy);          // O-F아래 수직
+      // oL 비공유 전자쌍: top=F 방향이므로 bottom, left
+      lone(oLx,cy,'O','bottom',2); lone(oLx,cy,'O','left',2);
+      // oR 비공유 전자쌍: bottom=F 방향이므로 top, right
+      lone(oRx,cy,'O','top',2); lone(oRx,cy,'O','right',2);
+      // 위쪽 F (fL): top, left, right (아래=O 방향)
+      lone(fLx,fLy,'F','top',2); lone(fLx,fLy,'F','left',2); lone(fLx,fLy,'F','right',2);
+      // 아래쪽 F (fR): bottom, left, right (위=O 방향)
+      lone(fRx,fRy,'F','bottom',2); lone(fRx,fRy,'F','left',2); lone(fRx,fRy,'F','right',2);
+      drawSym(fLx,fLy,'F'); drawSym(oLx,cy,'O');
+      drawSym(oRx,cy,'O'); drawSym(fRx,fRy,'F');
     },
     struct() {
-      const cy=120;
-      const gOF=gap('O','F'), gOO=gap('O','O');
-      const totalW = gOF + gOO + gOF;
-      const fLx = cx0 - totalW/2;
-      const oLx = fLx + gOF;
-      const oRx = oLx + gOO;
-      const fRx = oRx + gOF;
-      bondLine(fLx,cy,'F',oLx,cy,'O',1);
+      const cy=125;
+      const gOO=gap('O','O'), gOF=gap('O','F');
+      const oLx=cx0-gOO/2, oRx=cx0+gOO/2;
+      const fLx=oLx, fLy=cy-gOF;
+      const fRx=oRx, fRy=cy+gOF;
+      bondLine(fLx,fLy,'F',oLx,cy,'O',1);
       bondLine(oLx,cy,'O',oRx,cy,'O',1);
-      bondLine(oRx,cy,'O',fRx,cy,'F',1);
-      lone(oLx,cy,'O','top',2); lone(oLx,cy,'O','bottom',2);
-      lone(oRx,cy,'O','top',2); lone(oRx,cy,'O','bottom',2);
-      lone(fLx,cy,'F','top',2); lone(fLx,cy,'F','bottom',2); lone(fLx,cy,'F','left',2);
-      lone(fRx,cy,'F','top',2); lone(fRx,cy,'F','bottom',2); lone(fRx,cy,'F','right',2);
-      drawSym(fLx,cy,'F'); drawSym(oLx,cy,'O');
-      drawSym(oRx,cy,'O'); drawSym(fRx,cy,'F');
-      lbl(cx0,cy+55,'각 O: 비공유 전자쌍 2쌍 / 각 F: 비공유 전자쌍 3쌍');
+      bondLine(oRx,cy,'O',fRx,fRy,'F',1);
+      lone(oLx,cy,'O','bottom',2); lone(oLx,cy,'O','left',2);
+      lone(oRx,cy,'O','top',2); lone(oRx,cy,'O','right',2);
+      lone(fLx,fLy,'F','top',2); lone(fLx,fLy,'F','left',2); lone(fLx,fLy,'F','right',2);
+      lone(fRx,fRy,'F','bottom',2); lone(fRx,fRy,'F','left',2); lone(fRx,fRy,'F','right',2);
+      drawSym(fLx,fLy,'F'); drawSym(oLx,cy,'O');
+      drawSym(oRx,cy,'O'); drawSym(fRx,fRy,'F');
+      lbl(cx0,fRy+42,'각 O: 비공유 전자쌍 2쌍 / 각 F: 비공유 전자쌍 3쌍');
     }
   },
 };
